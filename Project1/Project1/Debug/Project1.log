@@ -1,0 +1,6 @@
+﻿  Bullet.cpp
+c:\users\b409_29\source\repos\project1\project1\bullet.cpp(52): warning C4244: '초기화 중': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+  MAin.cpp
+c:\users\b409_29\source\repos\project1\project1\main.cpp(74): warning C4154: 배열 식을 삭제했습니다. 포인터로 변환이 제공됩니다.
+  코드를 생성하고 있습니다...
+  Project1.vcxproj -> c:\Users\B409_29\source\repos\Project1\Debug\Project1.exe
