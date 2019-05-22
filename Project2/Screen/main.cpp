@@ -4,6 +4,7 @@
 #include <iostream>
 #include <conio.h>
 #include <Windows.h>
+#include <vector>
 
 using namespace std;
 
@@ -58,10 +59,10 @@ public:
 class GameObject {
 	int pos;
 	char face[20];
-	Screen* screen;
+	Screen&screen;
 
 public:
-	GameObject(int pos, const char* face, Screen* screen)
+	GameObject(int pos, const char* face, Screen&screen)
 		: pos(pos), screen(screen)
 	{
 		printf("GameObject constructor\n");
@@ -84,14 +85,16 @@ public:
 	}
 	void draw()
 	{
-		screen->draw(pos, face);
+		screen.draw(pos, face);
 	}
+
+	virtual void update() {}
 };
 
 class Player : public GameObject {
 	
 public:
-	Player(int pos, const char* face, Screen* screen) 
+	Player(int pos, const char* face, Screen&screen) 
 		: GameObject(pos, face, screen)
 	{	
 		printf("Player constructor\n");
@@ -113,7 +116,7 @@ public:
 		setPosition(getPosition() + 1);
 	}
 
-	void update()
+	void update() override
 	{
 
 	}
@@ -123,7 +126,7 @@ public:
 class Enemy : public GameObject {
 	
 public:
-	Enemy(int pos, const char* face, Screen* screen) 
+	Enemy(int pos, const char* face, Screen&screen) 
 		: GameObject(pos, face, screen)
 	{
 		printf("Enemy constructor\n");
@@ -139,7 +142,7 @@ public:
 		setPosition( getPosition() + rand() % 3 - 1);
 	}
 
-	void update()
+	void update() override
 	{
 		moveRandom();
 	}
@@ -147,10 +150,11 @@ public:
 
 class Bullet : public GameObject {
 	bool isFiring;
+	Enemy&enemy;
 
 public:
-	Bullet(int pos, const char* face, Screen* screen) 
-		: GameObject(pos, face, screen), isFiring(false)
+	Bullet(int pos, const char* face, Screen&screen,Enemy&enemy) 
+		: GameObject(pos, face, screen), isFiring(false),enemy(enemy)
 	{
 		printf("Bullet constructor\n");
 	}
@@ -158,6 +162,8 @@ public:
 	{
 		printf("Bullet destructor\n");
 	}
+
+
 
 	void moveLeft()
 	{
@@ -179,6 +185,22 @@ public:
 	{
 		isFiring = true;
 		setPosition(player_pos);
+	}
+
+	void update() override
+	{
+		if (isFiring == false) return;
+		int pos = getPosition();
+		if (pos < enemy.getPosition()) {
+			pos = pos + 1;
+		}
+		else if (pos > enemy.getPosition()) {
+			pos = pos - 1;
+		}
+		else {
+			isFiring = false;
+		}
+		setPosition(pos);
 	}
 
 	void update(int enemy_pos)
@@ -243,26 +265,68 @@ int main()
 }
 #else
 
+enum OjbectType
+{
+	PLAYER=0,
+	ENEMY,
+	BULLET
+};
+
 void test()
 {
-	Screen* screen = nullptr;
+	Screen*screen = nullptr;
 
 	screen = new Screen(80);
-	/* 80 };
-	Player player = { 30, "(^_^)", &screen };
-	Enemy enemy{ 60, "(*--*)", &screen };
-	Bullet bullet(-1, "+", &screen);
-	*/
-	
+
+	Player player = { 30, "(^_^)", *screen };
+	Enemy enemy{ 60, "(*--*)", *screen };
+	Bullet bullet(-1, "+", *screen,enemy);
+
+	vector<GameObject*> objects;
+
+	objects.push_back(&player);
+	objects.push_back(&enemy);
+	objects.push_back(&bullet);
+
+	while (true)
+	{
+		screen->clear();
+
+		//부모가 Polymorphic클래스 이므로 dynamic_cast로 다운케스팅 가능
+		Player*playerPtr = dynamic_cast<Player*>(objects[OjbectType::PLAYER]);
+		Bullet*bulletPtr = dynamic_cast<Bullet*>(objects[OjbectType::BULLET]);
+
+		if (_kbhit())
+		{
+			int c = _getch();
+			switch (c) {
+				case 'a':
+					playerPtr->moveLeft();
+					break;
+				case 'd':
+					playerPtr->moveRight();
+					break;
+				case ' ':
+					bulletPtr->fire(player.getPosition());
+					break;
+			}
+		}
+
+		for (GameObject*obj : objects)
+		{
+			obj->draw();
+			obj->update();
+		}
+
+		screen->render();
+		Sleep(66);
+	}
 }
 
 int main()
 {
 	test();
 
-
-	Screen* another = nullptr;
-	int ch = _getch();
 	return 0;
 }
 
